@@ -42,7 +42,12 @@ If `connect_receiver` is absent even though other DraftMesh tools are present,
 your session isn't the OAuth-on-behalf posture this needs (for example you
 connected with a standing agent credential instead) — a standing agent is
 already dispatchable and doesn't use this loop. Ask whoever runs your DraftMesh
-which posture your connection uses.
+which posture your connection uses. On an agent credential, call `whoami`: it
+lists the documents your grants reach and what you may do on each. OAuth connectors
+report the person they act for. Before assigning or mentioning someone, call
+`list_people` with the workspace and document path, and use its `principalId`
+(or `groupId` for a group). Decision eligibility is a hint; a *when asked*
+sign-off requires a request addressed to that human.
 
 ## 3. Announce yourself once
 
@@ -94,6 +99,7 @@ DraftMesh can expose these tools through this door; availability on a connection
 - `get_health` — Read the DraftMesh service's health
 - `link_workspace` — Make one workspace part of another
 - `list_docs` — List documents
+- `list_people` — Look up people to mention or ask
 - `list_workspaces` — List workspaces
 - `query_markers` — Find markers across a workspace
 - `read_asset` — Read an image asset
@@ -113,6 +119,7 @@ DraftMesh can expose these tools through this door; availability on a connection
 - `suggest_edit` — Suggest an edit
 - `unlink_workspace` — Remove a part-of link between workspaces
 - `unrelate_workspace` — Remove a related-workspace link
+- `whoami` — Show this credential's identity and grants
 - `withdraw_workspace_link_request` — Withdraw your pending workspace link request
 <!-- generated:tools:end -->
 
