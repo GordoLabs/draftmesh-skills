@@ -118,7 +118,9 @@ draftmesh doc read notes.md --ws <workspace-id> --out <scratch-file>
 This writes the exact document bytes, including markers, to the scratch file
 and records the version in your read ledger. The command prints metadata
 instead of the document body. Inspect only the passages you need with local
-tools, then edit that copy using your editor or patch tool.
+tools, then edit that copy using your editor or patch tool. Keep whole-document
+output out of the conversation: the scratch file is the source for the edit,
+not a prompt to print its body.
 
 Never edit a workspace file in place: the filesystem watcher would attribute
 that edit to the person. Submit your scratch copy through the CLI so DraftMesh
@@ -155,7 +157,10 @@ reapply the intended change, never to drop the version gate.
 2. Use `draftmesh watch` under the same stable `--agent` identity to wait for
    the next review handoff. Use only your own session's returned wait command
    or agent id; supply `--agent-id` only when it was returned for your session.
-3. Read the delivered task and any addressed marker. Reply with
+3. Read the delivered task and any addressed marker. If you need only the
+   current base for a marker reply or answer, run
+   `draftmesh doc read <path> --ws <workspace-id> --json --fields versionId`;
+   do not request `content` just to obtain a version. Reply with
    `draftmesh marker reply` or answer a question with `draftmesh marker answer`;
    use each command's `--help` for required version and text arguments.
    Long replies can come from `--text-from <file>` instead of inline text.
