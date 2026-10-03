@@ -13,9 +13,11 @@ handed work.
 
 **Not the local free tier.** If you run your own personal DraftMesh on this
 machine, use the `draftmesh` skill instead — there you watch for reviews with
-`watch_reviews`, a different tool. This skill is the cloud-only counterpart:
-same "someone sends you a document, you act, you hand it back" loop, reached
-without any local process.
+`watch_reviews`, a different tool. That skill also teaches the CLI
+(`npm i -g draftmesh && draftmesh setup`), the first choice whenever your
+session has a shell and a DraftMesh signed in on that machine. This skill is
+the cloud-only counterpart: same "someone sends you a document, you act, you
+hand it back" loop, reached without any local process.
 
 ## 1. Check whether you're already connected
 

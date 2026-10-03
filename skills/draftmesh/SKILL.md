@@ -72,6 +72,55 @@ The session and read ledger belong to that identity; changing names midway
 does not transfer another agent's work. Never read or copy daemon/session
 bearer tokens into commands or messages.
 
+## Using the CLI
+
+`draftmesh <group> <verb> <args> [flags]` is the shape of every tool command;
+`dm` is the same program. `draftmesh --version` prints the installed version,
+`npm i -g draftmesh` updates it, and `draftmesh doctor` compares the CLI, the
+daemon and the installed skill copy without starting anything.
+
+- **The daemon.** Tool commands (`ws`, `doc`, `marker`, `memory`, `task`,
+  `decide`, `diagnostic`) start the local daemon when none is running, wait
+  for it, then run; there is nothing to launch first. `draftmesh status`
+  reports whether it runs, its loopback URL, pid and state directory;
+  `draftmesh stop` stops it and `draftmesh restart` relaunches the installed
+  version after an upgrade. `watch`, `sync`, `skills sync`, `whoami` and
+  `logout` need a running daemon and say so instead of starting one. Running
+  `draftmesh` with no command runs the daemon in the foreground of that
+  terminal, so never do that from an agent shell.
+- **Identity.** Each invocation presents a scoped assistant session for one
+  agent name, resolved as `--agent`, then `DRAFTMESH_AGENT_NAME`, then the
+  harness's own name (Claude Code, Codex CLI, Cursor, Gemini CLI), else "CLI
+  agent". The read ledger behind `--out` and `--from` is keyed by that name,
+  the document and the scratch path, so a copy read under one name cannot be
+  submitted under another. A session expires after a day without activity
+  and when the daemon restarts; the next command mints a new one.
+- **Workspaces.** `--ws` takes the `ws` id from `draftmesh ws list`, or the
+  display name of a workspace shared with the signed-in person through the
+  cloud, which has no folder. Inside a registered folder the flag may be
+  omitted: the CLI resolves the workspace from the working directory. A
+  folder name is not an id and answers not found.
+- **Output and exit status.** Tool commands print the tool's result; add
+  `--json` whenever you parse it, and read errors from the envelope
+  `{code, action, message, retryable}`, where `action` names the recovery
+  (read again and reapply, or read a fresh scratch copy for a safe base).
+  Exit status 0 is success, 1 means the daemon refused or failed the
+  operation, and 2 is a usage error: a missing or incompatible flag, or an
+  unknown command. `ws map` prints markdown unless `--format json`.
+- **Structured and long arguments.** Anchors, assignees, mentions and
+  diagnostic kinds are JSON flags: `--anchor-json '{"quote":"exact text"}'`
+  (add `"spliceByteOffset"` when the quote repeats), `--assigned-to-json
+  '{"name":"…","principalId":"…"}'`, `--mentions-json '[…]'` and
+  `--kind-json '["error"]'`. `--options` and `--part-of` repeat, one flag per
+  value. Every text flag has a file-backed twin (`--text-from`,
+  `--replacement-from`, `--note-from`, `--summary-from`, `--content-from`)
+  that reads a path or `-` for stdin; use them for multi-line text and to
+  keep document bodies off the command line.
+- **Environment.** `DRAFTMESH_STATE_DIR` (default `~/.draftmesh`) holds the
+  daemon record, sessions and the read ledger, so every command in a task
+  must see the same value. `DRAFTMESH_LOCAL_ONLY=1` runs without cloud
+  connectivity. `DRAFTMESH_AGENT_NAME` sets the identity above.
+
 ## Read, edit a copy, then propose
 
 Start with `draftmesh ws list`, then `draftmesh ws map --ws <workspace-id>`.
