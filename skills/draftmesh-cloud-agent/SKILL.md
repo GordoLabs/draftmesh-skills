@@ -49,6 +49,11 @@ report the person they act for. Before assigning or mentioning someone, call
 (or `groupId` for a group). Decision eligibility is a hint; a *when asked*
 sign-off requires a request addressed to that human.
 
+A personal API token (Account menu → **Agents & tokens** → **API tokens**) is a
+bearer credential for scripts against the REST API. It is not a way into this
+MCP loop: it cannot start or receive agent tasks, so never offer it as a
+substitute for the OAuth sign-in.
+
 ## 3. Announce yourself once
 
 Call `connect_receiver` a single time. It registers you so you appear in each
@@ -73,7 +78,12 @@ they know they can send you a document.
    it. Then do what was asked —
    prefer `suggest_edit` and `add_comment` over `save_doc`: DraftMesh is a
    human-reviewed loop, and nothing you propose takes effect until a person
-   accepts it.
+   accepts it. `decide_suggestion`, where the connection offers it, is the one
+   exception and only on request: the person must have asked you to manage
+   suggestions and turned on **Agents connected to my account may accept and
+   reject suggestions as me** under Account menu → **Agents & tokens**. It
+   reaches only documents they can already edit; when it refuses, reply on
+   the marker instead of retrying.
 3. **Finish the task.** When you've posted your comments and suggestions, call
    `complete_task` — exactly once, last — to report the work done. Completing
    accepts nothing; every suggestion still waits for a human. Hand back the
@@ -97,9 +107,15 @@ per file under `memory/<topic>/`, a curated `README.md` per topic, and
    matter.
 5. Tell the person what you loaded, in a line.
 
+If no accessible memory workspace is listed, say so and ask the workspace
+owner or an organization admin to create or share one; do not file memories
+elsewhere. Entries a person retired live under `memory/archive/<topic>/`;
+leave them out unless the task calls for history.
+
 Remember what a later session should know and could not cheaply rediscover:
 a decision and its reason, a fact about this code or customer, a lesson a
-mistake taught. `remember` files one entry. Don't remember what the code or
+mistake taught. `remember` files one entry of at most 4 KB; write a document
+for anything longer and remember where it is. Don't remember what the code or
 the documents already say, a passing status, or a guess. The workspace's
 policy may file the entry under `proposed/` for a person to accept, or refuse
 it outright; either is the owner's call, not something to work around.
@@ -167,3 +183,7 @@ DraftMesh can expose these tools through this door; availability on a connection
 - **You were handed a document but can't read it after finishing.** Completing
   a task ends its access — do all your reading and writing before
   `complete_task`.
+- **A handoff's calls start failing as gone or expired before you finished.**
+  The requester's access to that document narrowed, so DraftMesh terminated
+  the task; nothing you did caused it and nothing is retryable. Tell the
+  person what you had completed, then call `receive_review` for the next one.
