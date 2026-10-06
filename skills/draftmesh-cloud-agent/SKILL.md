@@ -128,6 +128,11 @@ Never remember a credential or a personal detail; a write carrying a secret is
 refused. Personal working notes belong in your own memory workspace; facts the
 team should share belong in the team's.
 
+`read_workspace_map` may include optional `knowledge` metadata describing Open
+Knowledge Format types, explicit status, expiry and verification claims from
+the file. Missing fields are unknown, and file claims are separate from
+DraftMesh sign-offs.
+
 <!-- generated:tools:start -->
 ## Tool reference
 
@@ -180,8 +185,11 @@ DraftMesh can expose these tools through this door; availability on a connection
   while and returns `timedOut` when nothing arrived. Call it again. You only
   get a handoff after a reviewer actually clicks Send to agent and picks you.
 - **A write fails with a stale-version or conflict error.** Someone changed the
-  document since you read it — re-read it with `read_doc` and reapply; nothing
-  is lost.
+  document since you read it. Comments, questions, suggestions and replies
+  already rebase onto the newer version automatically while their quoted text
+  is still unique, so a failure means it no longer is — re-read with
+  `read_doc` and reapply; nothing is lost. Pass each write's returned
+  `versionId` as your next `baseVersionId` instead of re-reading.
 - **You were handed a document but can't read it after finishing.** Completing
   a task ends its access — do all your reading and writing before
   `complete_task`.

@@ -91,10 +91,14 @@ daemon and the installed skill copy without starting anything.
 - **Identity.** Each invocation presents a scoped assistant session for one
   agent name, resolved as `--agent`, then `DRAFTMESH_AGENT_NAME`, then the
   harness's own name (Claude Code, Codex CLI, Cursor, Gemini CLI), else "CLI
-  agent". The read ledger behind `--out` and `--from` is keyed by that name,
-  the document and the scratch path, so a copy read under one name cannot be
-  submitted under another. A session expires after a day without activity
-  and when the daemon restarts; the next command mints a new one.
+  agent". Keep that name stable for a whole task. `doc read --out` records
+  the version it read in a ledger keyed by that name, the document and the
+  scratch path, and a direct `doc save --from` takes its base from that
+  ledger, so a copy read under one name cannot be saved under another.
+  `doc suggest --from` re-reads the current document instead, and its
+  proposals are credited to the assistant that submits them. A session
+  expires after a day without activity and when the daemon restarts; the
+  next command mints a new one.
 - **Workspaces.** `--ws` takes the `ws` id from `draftmesh ws list`, or the
   display name of a workspace shared with the signed-in person through the
   cloud, which has no folder. Inside a registered folder the flag may be
@@ -125,6 +129,7 @@ daemon and the installed skill copy without starting anything.
 
 Start with `draftmesh ws list`, then `draftmesh ws map --ws <workspace-id>`.
 The map gives document titles and summaries; a document path gives its outline.
+Optional `knowledge` metadata describes Open Knowledge Format types, explicit status, expiry and verification claims from the file; missing fields are unknown, and file claims are separate from DraftMesh sign-offs.
 Use `draftmesh doc list --ws <workspace-id>` for a plain listing. Include `--ws`
 when the workspace is ambiguous; otherwise the CLI can resolve it from the
 working directory. Use a command's `--help` for its optional flags.
@@ -152,8 +157,9 @@ whole. An unknown id is reported as not found, and a host that keeps no version
 history refuses the flag rather than answering with the whole map. A long text
 document also pages: `draftmesh doc read` takes `--offset` and `--limit`
 (UTF-16 units; the default and maximum limit is 24576), and you follow
-`nextOffset` until it is null. Paging does not combine with `--section`, and
-pages are for inspection too; edit from a scratch copy.
+`nextOffset` until it is null. Paging does not combine with `--section` or
+`--out`, and pages are for inspection too; edit from a whole-document scratch
+copy.
 
 Use output controls when you need only part of a response:
 
@@ -176,7 +182,8 @@ text suffix is additional to the preview limit. Read again with a narrower
 section or a larger limit when you need the omitted content.
 Output controls do not shorten errors. `--fields` and `--max-chars` cannot be
 used with `--out` or `--from`. A `doc read --out` export must be a whole-document
-read, so it also cannot use `--section`. `--json` is available with `doc read
+read, so it also refuses `--section`, `--offset` and `--limit`: a scratch copy
+of one section or page would replace the whole document when saved. `--json` is available with `doc read
 --out` and reports export metadata; it remains unavailable with `doc suggest
 --from`. Scratch exports always contain the exact whole document.
 
@@ -259,7 +266,11 @@ leaving them stranded. A question can offer up to eight choices (`--options`,
 one flag per choice) and name an assignee; a sign-off request can carry
 `--due-date YYYY-MM-DD`. Accepting or
 rejecting suggestions through `draftmesh decide` requires the separate
-workspace permission and the person's instruction.
+workspace permission and the person's instruction. Prefer
+`draftmesh decide … --include-content false`: the bounded result omits the
+document body, and its `versionId` is the base for the next write. This
+requires a command whose `draftmesh decide --help` lists `--include-content`;
+omit the flag when an older installed command does not list it.
 
 Approvals, approval answers, rollback, turning a workspace's sync on or off,
 account changes and cloud connection changes are not assistant operations. Ask the person to use the UI
