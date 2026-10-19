@@ -24,6 +24,43 @@ read → edit a copy → propose → hand-off → react loop.
 - **A hosted session without a local shell:** choose the `draftmesh-cloud`
   connector and use the `draftmesh-cloud-agent` skill. Claude Desktop's
   shell-less connector flow belongs here.
+- **An ephemeral container** (Claude Code on the web, a cloud coding task, a
+  CI runner): a shell, but no machine that persists. See "You have no disk"
+  below. Never start a daemon or run `draftmesh login` / `connect_cloud`
+  there: each container would mint its own device session against the
+  person's account. Both refuse in a detected container, and
+  `draftmesh doctor` names the posture.
+
+### You have no disk (cloud sandbox)
+
+No DraftMesh folder is on this machine and none should be. Do not log in and
+do not start a daemon; the person's own DraftMesh syncs your work down to
+their files.
+
+1. If the harness offers the `draftmesh-cloud` connector, use it with the
+   `draftmesh-cloud-agent` skill.
+2. Otherwise run the same CLI commands in **hosted mode**: set
+   `DRAFTMESH_API_ORIGIN` to the DraftMesh site (for example
+   `https://app.dev.draftmesh.com`) and `DRAFTMESH_API_TOKEN` to a personal
+   API token the person created for you. When the harness attaches the token
+   itself (a network secret for that host), leave `DRAFTMESH_API_TOKEN`
+   unset. Never print the token or put it on a command line.
+3. Check with `draftmesh whoami`: it names the site, who you act as and, for
+   a personal token, the workspace it is bound to, its capability and expiry.
+
+Then `ws`, `doc`, `marker`, `decide` and `memory recall` work as below.
+Reads come from the service, not from files, so read with `doc read`
+(`--raw` for the bytes, `--out` for an editable copy) and write with
+`doc suggest`, `marker add` and `doc save --from`. A personal token cannot
+assign a question, request a sign-off, register or create a workspace, or
+save one section at a time; those answer "not permitted" or ask for the
+whole document. `decide` needs `edit` and the person's own account setting "Agents
+connected to my account may accept and reject suggestions as me", not the
+workspace switch described below. Hosted mode does not look mention names
+up, so give each mention its `principalId`; one with only a name is stored
+name-only and notifies nobody. A binary or pointer document comes back
+without extracted text. Commands that manage a local daemon (`status`,
+`sync`, `login`, `watch`) refuse in hosted mode.
 
 Cloud is also an explicit backup for a synced workspace: the person or harness
 chooses that connector for the session. The CLI never switches to cloud
@@ -134,6 +171,17 @@ Use `draftmesh doc list --ws <workspace-id>` for a plain listing. Include `--ws`
 when the workspace is ambiguous; otherwise the CLI can resolve it from the
 working directory. Use a command's `--help` for its optional flags.
 
+A cloud-bound workspace's folder is a sync mirror, and a mirror can be stale
+with nothing on the files to say so (sync paused, signed out, or not yet run
+since a restart). Before reading such a folder from disk, make one live read
+through the CLI and run `draftmesh ws fresh` once in the session (in the
+folder, or with `--ws <workspace-id>`). Exit 0 prints `synced <time>` and
+permits disk reads; exit 1 prints why not (`sync off`, `unavailable`,
+`stale since …`, or a local-only verdict for a folder with no cloud copy). After a
+failed check, read through the CLI (`doc read --raw`) and say the disk copy is
+stale. `--max-age` sets the bound (default `10m`); `draftmesh sync` is the fix,
+not `ws fresh`, which never syncs.
+
 Orient with the map before opening document bodies. Expand the relevant folder,
 read any agent guidance the map names, then inspect the selected document's
 outline. For a focused read, copy its heading slug exactly:
@@ -160,6 +208,19 @@ document also pages: `draftmesh doc read` takes `--offset` and `--limit`
 `nextOffset` until it is null. Paging does not combine with `--section` or
 `--out`, and pages are for inspection too; edit from a whole-document scratch
 copy.
+
+To read document text without the JSON envelope, add `--raw`. Stdout is then
+the document exactly as stored, markers intact, with nothing added; the
+`versionId` goes to stderr as `versionId: <id>` (plus `nextOffset: <n>` for a
+page, and `truncated: <bytes> bytes total` when `--max-chars` cut it). `--raw`
+works with `--section`, `--offset`/`--limit` and `--max-chars`, and refuses
+`--json`, `--fields` and `--out`. Prefer it for bulk reads through the CLI; a
+read without `--raw` or `--json` still prints the JSON envelope today.
+
+```sh
+draftmesh doc read specs/design.md --ws <workspace-id> --raw
+draftmesh doc read specs/design.md --ws <workspace-id> --section decision --raw
+```
 
 Use output controls when you need only part of a response:
 
@@ -385,6 +446,10 @@ Local CLI commands and their required arguments. Use a command's --help for opti
   follow the reported fix. `draftmesh setup` refreshes skill copies and the
   Claude Code loopback allowlist. If a newer CLI finds an older daemon,
   restart the daemon as instructed rather than repeatedly reinstalling.
+- **Sign-in refused as "an ephemeral environment":** use the hosted
+  connector or hosted mode instead (see "You have no disk"). Only the person
+  may override it (`--persistent`), and only on a machine that outlives the
+  session.
 - **"Semantic search is not installed on this computer":** the npm package
   leaves the semantic runtime out. The person runs `draftmesh setup --semantic`
   once (about 500 MB, CPU only); until then use `--mode text` or name search,
